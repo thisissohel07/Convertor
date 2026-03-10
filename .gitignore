@@ -1,0 +1,9 @@
+node_modules/
+.env
+dist/
+converted/
+uploads/
+test.pdf
+test.js
+test-require.js
+.DS_Store

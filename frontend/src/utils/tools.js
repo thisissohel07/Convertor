@@ -1,0 +1,19 @@
+import { FileText, Image, FileDown, Layers, Scissors, FileType2 } from 'lucide-react';
+
+export const TOOLS = [
+    { id: 'png-to-jpg', name: 'PNG to JPG', icon: Image, color: 'text-orange-500', bg: 'bg-orange-50', desc: 'Transform PNG images into JPG quality.', comingSoon: false, api: '/png-to-jpg', accepts: 'image/png', singleMode: true },
+    { id: 'jpg-to-png', name: 'JPG to PNG', icon: Image, color: 'text-yellow-500', bg: 'bg-yellow-50', desc: 'Transform JPG images into true PNG format.', comingSoon: false, api: '/jpg-to-png', accepts: 'image/jpeg', singleMode: true },
+    { id: 'jpg-to-pdf', name: 'JPG to PDF', icon: Layers, color: 'text-blue-500', bg: 'bg-blue-50', desc: 'Convert your JPG images into a single PDF.', comingSoon: false, api: '/jpg-to-pdf', accepts: 'image/jpeg,image/png', singleMode: false },
+    { id: 'pdf-to-jpg', name: 'PDF to JPG', icon: Image, color: 'text-pink-500', bg: 'bg-pink-50', desc: 'Convert PDF pages into JPG images.', comingSoon: false, api: '/pdf-to-jpg', accepts: 'application/pdf', singleMode: true },
+    { id: 'pdf-to-text', name: 'PDF to Text', icon: FileText, color: 'text-gray-600', bg: 'bg-gray-50', desc: 'Extract raw text from your PDF files.', comingSoon: false, api: '/pdf-to-text', accepts: 'application/pdf', singleMode: true },
+    { id: 'text-to-pdf', name: 'Text to PDF', icon: FileDown, color: 'text-purple-500', bg: 'bg-purple-50', desc: 'Convert a text file into a fresh PDF.', comingSoon: false, api: '/text-to-pdf', accepts: 'text/plain', singleMode: true },
+    { id: 'merge-pdf', name: 'Merge PDF', icon: Layers, color: 'text-green-500', bg: 'bg-green-50', desc: 'Combine multiple PDF files into one.', comingSoon: false, api: '/merge-pdf', accepts: 'application/pdf', singleMode: false },
+    { id: 'split-pdf', name: 'Split PDF', icon: Scissors, color: 'text-red-500', bg: 'bg-red-50', desc: 'Separate a PDF into multiple files.', comingSoon: false, api: '/split-pdf', accepts: 'application/pdf', singleMode: true },
+    { id: 'compress-pdf', name: 'Compress PDF', icon: FileDown, color: 'text-teal-500', bg: 'bg-teal-50', desc: 'Reduce the file size of your PDF document.', comingSoon: false, api: '/compress-pdf', accepts: 'application/pdf', singleMode: true },
+    { id: 'pdf-to-word', name: 'PDF to Word', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50', desc: 'Convert PDF into an editable Word Document.', comingSoon: false, api: '/pdf-to-word', accepts: 'application/pdf', singleMode: true },
+    { id: 'word-to-pdf', name: 'Word to PDF', icon: FileType2, color: 'text-indigo-500', bg: 'bg-indigo-50', desc: 'Wrap your Word doc securely into a PDF.', comingSoon: false, api: '/word-to-pdf', accepts: 'application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document', singleMode: true },
+    { id: 'pdf-to-excel', name: 'PDF to Excel', icon: FileText, color: 'text-green-600', bg: 'bg-green-50', desc: 'Turn PDF tables into an Excel sheet.', comingSoon: false, api: '/pdf-to-excel', accepts: 'application/pdf', singleMode: true },
+    { id: 'excel-to-pdf', name: 'Excel to PDF', icon: FileType2, color: 'text-emerald-500', bg: 'bg-emerald-50', desc: 'Convert Excel spreadsheets to PDF.', comingSoon: false, api: '/excel-to-pdf', accepts: 'application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', singleMode: true },
+    { id: 'pdf-to-ppt', name: 'PDF to PPT', icon: FileText, color: 'text-orange-600', bg: 'bg-orange-50', desc: 'Turn PDF pages into PowerPoint slides.', comingSoon: false, api: '/pdf-to-ppt', accepts: 'application/pdf', singleMode: true },
+    { id: 'ppt-to-pdf', name: 'PPT to PDF', icon: FileType2, color: 'text-amber-500', bg: 'bg-amber-50', desc: 'Convert PowerPoint files to PDF.', comingSoon: false, api: '/ppt-to-pdf', accepts: 'application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation', singleMode: true },
+];
