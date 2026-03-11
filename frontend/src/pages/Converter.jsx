@@ -10,7 +10,7 @@ import JSZip from 'jszip';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/convert';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://convertor-fvfb.onrender.com/api/convert';
 
 const Converter = () => {
     const { type } = useParams();
