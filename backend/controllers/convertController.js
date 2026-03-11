@@ -188,11 +188,39 @@ exports.compressPdf = async (req, res) => {
     }
 };
 
-const extractOfficeToPdf = async (req, res) => {
+const mammoth = require('mammoth');
+
+exports.wordToPdf = async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+        console.log(`Starting wordToPdf extraction for: ${req.file.originalname}`);
+        
+        const result = await mammoth.extractRawText({ path: req.file.path });
+        const text = result.value;
+        
+        console.log(`Extraction successful for Word: ${req.file.originalname}, length: ${text ? text.length : 0}`);
+
+        const outputPath = getOutputPath(req.file.originalname, '.pdf');
+        const doc = new PDFDocument();
+        const writeStream = fs.createWriteStream(outputPath);
+        doc.pipe(writeStream);
+        doc.text(text || "No text could be extracted from this Word document.");
+        doc.end();
+
+        writeStream.on('finish', () => {
+            res.download(outputPath, path.basename(outputPath));
+        });
+    } catch (error) {
+        console.error(`Error during Word to PDF extraction for ${req.file?.originalname}:`, error);
+        res.status(500).json({ error: 'Conversion failed', details: error.message });
+    }
+};
+
+exports.pptToPdf = async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
         
-        console.log(`Starting extraction for: ${req.file.originalname}`);
+        console.log(`Starting PPT extraction for: ${req.file.originalname}`);
         
         // Add a timeout of 15 seconds for extraction
         const extractionPromise = parseOfficeAsync(req.file.path);
@@ -200,28 +228,30 @@ const extractOfficeToPdf = async (req, res) => {
             setTimeout(() => reject(new Error('Extraction timed out after 15 seconds (file may be too complex)')), 15000)
         );
         
-        const text = await Promise.race([extractionPromise, timeoutPromise]);
-        
-        console.log(`Extraction successful for: ${req.file.originalname}, length: ${text ? text.length : 0}`);
+        let text = "No text could be extracted from this PowerPoint.";
+        try {
+            text = await Promise.race([extractionPromise, timeoutPromise]);
+            console.log(`Extraction successful for PPT: ${req.file.originalname}, length: ${text ? text.length : 0}`);
+        } catch (extractError) {
+             console.log(`Office parser failed for PPT, returning blank template. Error: ${extractError.message}`);
+             text = `[PowerPoint Conversion Alert]\n\nThe server could not read the text from this presentation (${req.file.originalname}).\n\nThis usually happens because the PPT contains complex formatting, images, or requires Microsoft Office to be installed on the server.\n\nError: ${extractError.message}`;
+        }
 
         const outputPath = getOutputPath(req.file.originalname, '.pdf');
         const doc = new PDFDocument();
         const writeStream = fs.createWriteStream(outputPath);
         doc.pipe(writeStream);
-        doc.text(text || "No text could be extracted from this document.");
+        doc.text(text);
         doc.end();
 
         writeStream.on('finish', () => {
             res.download(outputPath, path.basename(outputPath));
         });
     } catch (error) {
-        console.error(`Error during office extraction for ${req.file?.originalname}:`, error);
+        console.error(`Error during PPT extraction for ${req.file?.originalname}:`, error);
         res.status(500).json({ error: 'Conversion failed', details: error.message });
     }
 };
-
-exports.wordToPdf = extractOfficeToPdf;
-exports.pptToPdf = extractOfficeToPdf;
 
 exports.excelToPdf = async (req, res) => {
     try {
