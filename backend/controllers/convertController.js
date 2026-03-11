@@ -191,8 +191,19 @@ exports.compressPdf = async (req, res) => {
 const extractOfficeToPdf = async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-        const text = await parseOfficeAsync(req.file.path);
         
+        console.log(`Starting extraction for: ${req.file.originalname}`);
+        
+        // Add a timeout of 15 seconds for extraction
+        const extractionPromise = parseOfficeAsync(req.file.path);
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Extraction timed out after 15 seconds (file may be too complex)')), 15000)
+        );
+        
+        const text = await Promise.race([extractionPromise, timeoutPromise]);
+        
+        console.log(`Extraction successful for: ${req.file.originalname}, length: ${text ? text.length : 0}`);
+
         const outputPath = getOutputPath(req.file.originalname, '.pdf');
         const doc = new PDFDocument();
         const writeStream = fs.createWriteStream(outputPath);
@@ -204,6 +215,7 @@ const extractOfficeToPdf = async (req, res) => {
             res.download(outputPath, path.basename(outputPath));
         });
     } catch (error) {
+        console.error(`Error during office extraction for ${req.file?.originalname}:`, error);
         res.status(500).json({ error: 'Conversion failed', details: error.message });
     }
 };
@@ -214,6 +226,7 @@ exports.pptToPdf = extractOfficeToPdf;
 exports.excelToPdf = async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+        console.log(`Starting excelToPdf for: ${req.file.originalname}`);
         const workbook = xlsx.readFile(req.file.path);
         let text = '';
         workbook.SheetNames.forEach(sheetName => {
@@ -235,6 +248,7 @@ exports.excelToPdf = async (req, res) => {
             res.download(outputPath, path.basename(outputPath));
         });
     } catch (error) {
+        console.error(`Error in excelToPdf for ${req.file?.originalname}:`, error);
         res.status(500).json({ error: 'Conversion failed', details: error.message });
     }
 };
@@ -243,6 +257,7 @@ exports.excelToPdf = async (req, res) => {
 exports.pdfToWord = async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+        console.log(`Starting pdfToWord for: ${req.file.originalname}`);
         const dataBuffer = fs.readFileSync(req.file.path);
         const data = await pdfParse(dataBuffer);
         
@@ -257,6 +272,7 @@ exports.pdfToWord = async (req, res) => {
         fs.writeFileSync(outputPath, buffer);
         res.download(outputPath, path.basename(outputPath));
     } catch (error) {
+        console.error(`Error in pdfToWord for ${req.file?.originalname}:`, error);
         res.status(500).json({ error: 'Conversion failed', details: error.message });
     }
 };
@@ -264,6 +280,7 @@ exports.pdfToWord = async (req, res) => {
 exports.pdfToExcel = async (req, res) => {
     try {
          if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+         console.log(`Starting pdfToExcel for: ${req.file.originalname}`);
          const dataBuffer = fs.readFileSync(req.file.path);
          const data = await pdfParse(dataBuffer);
          
@@ -276,13 +293,15 @@ exports.pdfToExcel = async (req, res) => {
          xlsx.writeFile(workbook, outputPath);
          res.download(outputPath, path.basename(outputPath));
     } catch (error) {
-        res.status(500).json({ error: 'Conversion failed', details: error.message });
+         console.error(`Error in pdfToExcel for ${req.file?.originalname}:`, error);
+         res.status(500).json({ error: 'Conversion failed', details: error.message });
     }
 };
 
 exports.pdfToPpt = async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+        console.log(`Starting pdfToPpt for: ${req.file.originalname}`);
         const dataBuffer = fs.readFileSync(req.file.path);
         const data = await pdfParse(dataBuffer);
         
@@ -300,6 +319,7 @@ exports.pdfToPpt = async (req, res) => {
         
         res.download(outputPath, path.basename(outputPath));
     } catch (error) {
+        console.error(`Error in pdfToPpt for ${req.file?.originalname}:`, error);
         res.status(500).json({ error: 'Conversion failed', details: error.message });
     }
 };
