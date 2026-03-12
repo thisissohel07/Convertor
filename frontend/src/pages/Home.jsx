@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { TOOLS } from '../utils/tools';
 import { Zap, Shield, Sparkles } from 'lucide-react';
@@ -42,7 +43,7 @@ const Home = () => {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {TOOLS.map((tool, index) => {
+                        {TOOLS.map((tool) => {
                             const Icon = tool.icon;
                             return (
                                 <Link 
