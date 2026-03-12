@@ -7,6 +7,7 @@ import { UploadCloud, File, X, ArrowRight, Loader2, CheckCircle2, AlertCircle, S
 import axios from 'axios';
 import { TOOLS } from '../utils/tools';
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import JSZip from 'jszip';
 import { PDFDocument as PDFLibDoc } from 'pdf-lib';
 import { jsPDF } from 'jspdf';
@@ -18,8 +19,9 @@ import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 
-import * as pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs';
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+if (typeof window !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+}
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://convertor-fvfb.onrender.com/api/convert';
 
