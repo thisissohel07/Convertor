@@ -13,8 +13,13 @@ import { jsPDF } from 'jspdf';
 import mammoth from 'mammoth';
 import * as xlsx from 'xlsx';
 import pptxgen from 'pptxgenjs';
+import { Document, Packer, Paragraph } from 'docx';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+import * as pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://convertor-fvfb.onrender.com/api/convert';
 
@@ -59,6 +64,54 @@ const Converter = () => {
 
     const removeFile = (index) => {
         setFiles(files.filter((_, i) => i !== index));
+    };
+
+    const stripExtension = (name) => {
+        return name.substring(0, name.lastIndexOf('.')) || name;
+    };
+
+    const handleDownload = async () => {
+        if (!resultUrl) return;
+
+        if (Capacitor.isNativePlatform()) {
+            try {
+                // Convert blob URL back to binary/base64 for Capacitor
+                const response = await fetch(resultUrl.url);
+                const blob = await response.blob();
+                
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onloadend = async () => {
+                    const base64Data = reader.result.split(',')[1];
+                    
+                    // 1. Save to temporary directory
+                    const savedFile = await Filesystem.writeFile({
+                        path: resultUrl.filename,
+                        data: base64Data,
+                        directory: Directory.Cache
+                    });
+
+                    // 2. Share it (this opens Android save/share dialog)
+                    await Share.share({
+                        title: 'Download Finished',
+                        text: 'Save your converted file',
+                        url: savedFile.uri,
+                        dialogTitle: 'Save File'
+                    });
+                };
+            } catch (err) {
+                console.error('Native download error:', err);
+                setError('Failed to save file on this device.');
+            }
+        } else {
+            // Standard browser download
+            const link = document.createElement('a');
+            link.href = resultUrl.url;
+            link.download = resultUrl.filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     };
 
     const handleConvert = async () => {
@@ -112,10 +165,10 @@ const Converter = () => {
                     }
                     if (pdf.numPages === 1) {
                         resultBlob = await zip.file('page-1.jpg').async('blob');
-                        filename = file.name.replace('.pdf', '') + '.jpg';
+                        filename = stripExtension(file.name) + '.jpg';
                     } else {
                         resultBlob = await zip.generateAsync({ type: 'blob' });
-                        filename = file.name.replace('.pdf', '') + '-images.zip';
+                        filename = stripExtension(file.name) + '-images.zip';
                     }
                     break;
                 }
@@ -131,7 +184,7 @@ const Converter = () => {
                         setProgress(Math.round((i / pdf.numPages) * 100));
                     }
                     resultBlob = new Blob([text], { type: 'text/plain' });
-                    filename = file.name.replace('.pdf', '') + '.txt';
+                    filename = stripExtension(file.name) + '.txt';
                     break;
                 }
 
@@ -141,7 +194,7 @@ const Converter = () => {
                     const lines = doc.splitTextToSize(text, 180);
                     doc.text(lines, 10, 10);
                     resultBlob = doc.output('blob');
-                    filename = file.name.replace('.txt', '') + '.pdf';
+                    filename = stripExtension(file.name) + '.pdf';
                     setProgress(100);
                     break;
                 }
@@ -209,11 +262,36 @@ const Converter = () => {
                     const arrayBuffer = await file.arrayBuffer();
                     const result = await mammoth.extractRawText({ arrayBuffer });
                     const doc = new jsPDF();
-                    const lines = doc.splitTextToSize(result.value, 180);
+                    const lines = doc.splitTextToSize(result.value || "No text found", 180);
                     doc.text(lines, 10, 10);
                     resultBlob = doc.output('blob');
-                    filename = file.name.replace('.docx', '').replace('.doc', '') + '.pdf';
+                    filename = stripExtension(file.name) + '.pdf';
                     setProgress(100);
+                    break;
+                }
+
+                case 'ppt-to-pdf': {
+                    const zip = new JSZip();
+                    const data = await file.arrayBuffer();
+                    const content = await zip.loadAsync(data);
+                    let text = '';
+                    
+                    // Simple slide text extractor (best effort offline)
+                    const slideFiles = Object.keys(content.files).filter(name => name.startsWith('ppt/slides/slide'));
+                    for (let i = 0; i < slideFiles.length; i++) {
+                        const xml = await content.file(slideFiles[i]).async('text');
+                        const matches = xml.match(/<a:t>([^<]*)<\/a:t>/g);
+                        if (matches) {
+                            text += matches.map(m => m.replace(/<[^>]*>/g, '')).join(' ') + '\n';
+                        }
+                        setProgress(Math.round(((i + 1) / slideFiles.length) * 100));
+                    }
+                    
+                    const doc = new jsPDF();
+                    const lines = doc.splitTextToSize(text || "No text could be extracted from this PowerPoint.", 180);
+                    doc.text(lines, 10, 10);
+                    resultBlob = doc.output('blob');
+                    filename = stripExtension(file.name) + '.pdf';
                     break;
                 }
 
@@ -230,7 +308,7 @@ const Converter = () => {
                     const lines = doc.splitTextToSize(text, 180);
                     doc.text(lines, 10, 10);
                     resultBlob = doc.output('blob');
-                    filename = file.name.replace('.xlsx', '').replace('.xls', '') + '.pdf';
+                    filename = stripExtension(file.name) + '.pdf';
                     setProgress(100);
                     break;
                 }
@@ -244,8 +322,15 @@ const Converter = () => {
                         const content = await page.getTextContent();
                         text += content.items.map(item => item.str).join(' ') + '\n';
                     }
-                    resultBlob = new Blob([text], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-                    filename = file.name.replace('.pdf', '') + '.docx';
+                    
+                    const doc = new Document({
+                        sections: [{
+                            children: text.split('\n').filter(Boolean).map(line => new Paragraph(line))
+                        }]
+                    });
+                    
+                    resultBlob = await Packer.toBlob(doc);
+                    filename = stripExtension(file.name) + '.docx';
                     setProgress(100);
                     break;
                 }
@@ -265,7 +350,7 @@ const Converter = () => {
                     xlsx.utils.book_append_sheet(workbook, worksheet, "Sheet1");
                     const wbout = xlsx.write(workbook, { bookType: 'xlsx', type: 'array' });
                     resultBlob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                    filename = file.name.replace('.pdf', '') + '.xlsx';
+                    filename = stripExtension(file.name) + '.xlsx';
                     setProgress(100);
                     break;
                 }
@@ -284,7 +369,7 @@ const Converter = () => {
                     }
                     const pptout = await pres.write('blob');
                     resultBlob = pptout;
-                    filename = file.name.replace('.pdf', '') + '.pptx';
+                    filename = stripExtension(file.name) + '.pptx';
                     break;
                 }
 
@@ -417,13 +502,12 @@ const Converter = () => {
                             <p className="text-gray-500 mb-10 max-w-md mx-auto">Your file has been processed and is ready for download. It will be securely deleted from our servers.</p>
                             
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                <a 
-                                    href={resultUrl.url} 
-                                    download={resultUrl.filename}
+                                <button
+                                    onClick={handleDownload}
                                     className="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-bold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-all shadow-lg hover:-translate-y-0.5"
                                 >
                                     <FileDown size={20} /> Download File
-                                </a>
+                                </button>
                                 <button 
                                     onClick={() => { setResultUrl(null); setFiles([]); }}
                                     className="inline-flex items-center justify-center px-8 py-4 text-base font-bold text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all"

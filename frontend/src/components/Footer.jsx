@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Layers, Github, Twitter, Linkedin } from 'lucide-react';
+import { Layers, Github, Linkedin, Instagram } from 'lucide-react';
 
 const Footer = () => {
     return (
@@ -18,9 +18,9 @@ const Footer = () => {
                         Fast, secure, and free file conversion tools for everyone. Premium design, built for productivity.
                     </p>
                     <div className="flex gap-4 text-gray-400">
-                        <a href="#" className="hover:text-primary-500 transition-colors"><Twitter size={20} /></a>
-                        <a href="#" className="hover:text-primary-500 transition-colors"><Github size={20} /></a>
-                        <a href="#" className="hover:text-primary-500 transition-colors"><Linkedin size={20} /></a>
+                        <a href="https://github.com/thisissohel07" target="_blank" rel="noopener noreferrer" className="hover:text-primary-500 transition-colors"><Github size={20} /></a>
+                        <a href="https://www.linkedin.com/in/shaiksohel07/" target="_blank" rel="noopener noreferrer" className="hover:text-primary-500 transition-colors"><Linkedin size={20} /></a>
+                        <a href="https://www.instagram.com/thisissohel07/" target="_blank" rel="noopener noreferrer" className="hover:text-primary-500 transition-colors"><Instagram size={20} /></a>
                     </div>
                 </div>
                 <div>
