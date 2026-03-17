@@ -28,7 +28,7 @@ cd frontend
 npm install
 npm run dev
 ```
-*The frontend will run on http://localhost:5173*
+*The frontend will run on (https://convertor-git-main-thisissohel07s-projects.vercel.app/)
 
 ## Deployment
 - **Frontend** can be easily deployed to Vercel or Netlify.
